@@ -18,6 +18,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.lang.System.exit;
+
 public class Main {
     // Загружаем библиотеку OpenCV, а так же проеверяем версию библиотеки.
     static {
@@ -34,7 +36,7 @@ public class Main {
         window.setVisible(true);
 
         // Инициализируем видеопоток.
-        VideoCapture cap = new VideoCapture(0);
+        VideoCapture cap = new VideoCapture("http://192.168.1.92:4444/video_feed");
 
         // Инициализируем переменные.
         Mat frame = new Mat();
@@ -47,7 +49,6 @@ public class Main {
         ImageIcon ic;
         BufferedImage img;
         MatOfInt indices = new MatOfInt();
-        int k = 0;
 
         // Загружаем файл с наименованиями классов.
         String path = "src/yolov4/yolov4.names";
@@ -80,7 +81,12 @@ public class Main {
             width = frame.width();
 
             // Изменяем размер кадра для уменьшения нагрузки на нейронную сеть.
-            Imgproc.resize(frame, frameResized, new Size(256, 256));
+            try {
+                Imgproc.resize(frame, frameResized, new Size(256, 256));
+            } catch (Exception e){
+                exit(1);
+            }
+
 
             // Подаём blob на вход нейронной сети.
             network.setInput(Dnn.blobFromImage(frameResized, 1 / 255.0));
@@ -161,17 +167,12 @@ public class Main {
                     );
                     // Наносим текст на изображение.
                     Imgproc.putText(frame, label, textPoint, 1, 1.5, colors[classIndex]);
-//                    System.out.println(label);
+                    // System.out.println(label);
                 }
             }
 
             // Преобразуем Mat в BufferedImage для отображения в окне.
             Imgcodecs.imencode(".png", frame, buf);
-            if (k%60==0){
-                Imgproc.resize(frame, frame, new Size(frame.width()*0.5, frame.height()*0.5));
-                Imgcodecs.imwrite("src/out/" + k + ".png", frame);
-            }
-            k++;
             ic = new ImageIcon(buf.toArray());
 
             // Отображаем изображение в окне.
@@ -223,7 +224,7 @@ public class Main {
     }
 
     // Очищает папку "out"
-    public static void clearFolder(){
+    public static void clearFolder() {
         String folderPath = "/home/senya/IdeaProjects/test/src/out";
         Path path = Paths.get(folderPath);
         try {
