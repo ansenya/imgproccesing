@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Main {
     // Загружаем библиотеку OpenCV, а так же проеверяем версию библиотеки.
@@ -28,11 +29,8 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         // Создаем окно для просмотра изображения.
         JFrame window = new JFrame("Window:");
-        // Создаем контейнер для изображения.
         JLabel screen = new JLabel();
-        // Устанавливаем операцию закрытия по умолчанию.
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // Делаем окно отображения контента видимым.
         window.setVisible(true);
 
         // Инициализируем видеопоток.
@@ -226,13 +224,20 @@ public class Main {
 
     // Очищает папку "out"
     public static void clearFolder(){
-        String folderPath = "/src/out";
+        String folderPath = "/home/senya/IdeaProjects/test/src/out";
         Path path = Paths.get(folderPath);
         try {
-            Files.delete(path);
-            System.out.println("Папка успешно удалена.");
-        } catch (Exception e) {
-            System.out.println("Ошибка при удалении папки: " + e.getMessage());
+            // Рекурсивно обходим все файлы и подпапки внутри папки
+            Stream<Path> walk = Files.walk(path);
+            // Удаляем каждый файл и подпапку
+            walk.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+            // Создаем новую папку
+            new File(folderPath).mkdirs();
+            System.out.println("Папка успешно очищена.");
+        } catch (IOException e) {
+            System.out.println("Ошибка при очистке папки: " + e.getMessage());
         }
     }
 }
